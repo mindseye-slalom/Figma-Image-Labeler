@@ -4,7 +4,7 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Image Name Labeler</title>
+    <title>Display Image Name</title>
     <style>
         body {
             font-family: Inter, Arial, sans-serif;
@@ -70,12 +70,12 @@
 </head>
 
 <body>
-    <h3>Image Name Labeler</h3>
+    <h3>Display Image Name</h3>
 
     <div style="font-size:12px;color:#666;margin-bottom:12px">Select single or multiple images and press the button
         below to extract file image names.</div>
     <div>
-        <button id="addLabel" disabled>Add label to selection</button>
+        <button id="addLabel" disabled>Display Image Name</button>
         <div id="message"></div>
     </div>
 
@@ -83,13 +83,16 @@
         const addLabel = document.getElementById('addLabel');
         const message = document.getElementById('message');
 
-        function setButtonState(active) {
+        function setButtonState(active, count = 0) {
             if (active) {
                 addLabel.disabled = false;
                 addLabel.classList.add('active');
+                // Update button text based on selection count
+                addLabel.textContent = count === 1 ? 'Display Image Name' : 'Display Image Names';
             } else {
                 addLabel.disabled = true;
                 addLabel.classList.remove('active');
+                addLabel.textContent = 'Display Image Name';
             }
         }
         // Set initial button state to inactive (gray)
@@ -112,14 +115,17 @@
             if (msg.type === 'labels-created') {
                 setButtonState(true);
                 if (msg.count > 0) {
-                    showMessage(`Added labels to ${msg.count} image(s)`, 'success');
+                    const message = msg.count === 1
+                        ? 'Added label to image'
+                        : `Added labels to ${msg.count} images`;
+                    showMessage(message, 'success');
                 } else {
                     showMessage('No image fills found in selection', 'error');
                 }
             }
             if (msg.type === 'selection-info') {
                 // Enable button only if selection count > 0
-                setButtonState(msg.count > 0);
+                setButtonState(msg.count > 0, msg.count);
             }
         };
 

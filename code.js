@@ -59,10 +59,8 @@ async function createLabelForImage(node) {
     if (imageFill && imageFill.imageHash) {
         // Try to extract image name from PNG metadata
         imageName = await deriveImageNameFromNode(node);
-        // If no metadata, fallback to imageHash
-        if (!imageName) imageName = imageFill.imageHash;
     }
-    // If not an image fill or no name found, fallback to node name
+    // If no metadata found, fallback to node name
     if (!imageName) imageName = node.name || 'Image';
 
     // Create text label
@@ -168,7 +166,10 @@ figma.ui.onmessage = async (msg) => {
         }
 
         if (created.length) {
-            figma.notify(`Added labels to ${created.length} image(s)`);
+            const message = created.length === 1
+                ? 'Added label to image'
+                : `Added labels to ${created.length} images`;
+            figma.notify(message);
             figma.ui.postMessage({ type: 'labels-created', count: created.length });
         } else {
             figma.notify('No image fills found in selection');

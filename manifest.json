@@ -1,5 +1,5 @@
 {
-    "name": "Image Name Labeler",
+    "name": "Display Image Name",
     "id": "image-name-labeler-rj-001",
     "api": "1.0.0",
     "main": "code.js",
@@ -11,7 +11,7 @@
     "relaunchButtons": [
         {
             "command": "open",
-            "name": "Open Image Labeler"
+            "name": "Display Image Name"
         }
     ]
 }
