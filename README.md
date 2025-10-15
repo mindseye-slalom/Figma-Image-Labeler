@@ -20,4 +20,3 @@ Usage
 Notes & Limitations
 - The plugin attempts to load the "Inter" font for the text. If not available, Figma will fallback to a default UI font.
 - The plugin stores label metadata as pluginData on the group node.
-- This is a minimal implementation and can be extended to show an eye icon inside the canvas; currently visibility toggling is via the plugin UI button.
