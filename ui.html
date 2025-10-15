@@ -1,0 +1,135 @@
+<!doctype html>
+<html>
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Image Name Labeler</title>
+    <style>
+        body {
+            font-family: Inter, Arial, sans-serif;
+            margin: 12px;
+        }
+
+        button {
+            padding: 8px 12px;
+            margin: 6px 0;
+            width: 100%;
+            background: #cbd5e1;
+            color: #666;
+            border: none;
+            border-radius: 4px;
+            font-size: 15px;
+            cursor: not-allowed;
+            transition: background 0.2s;
+        }
+
+        button.active {
+            background: #2563eb;
+            color: #fff;
+            cursor: pointer;
+        }
+
+        button:disabled {
+            background: #cbd5e1;
+            color: #666;
+            cursor: not-allowed;
+        }
+
+        .row {
+            display: flex;
+            gap: 8px;
+            align-items: center
+        }
+
+        .icon {
+            width: 18px;
+            height: 18px;
+        }
+
+        .toggle {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        #message {
+            font-size: 13px;
+            margin-top: 6px;
+            min-height: 18px;
+        }
+
+        #message.success {
+            color: #16a34a;
+        }
+
+        #message.error {
+            color: #dc2626;
+        }
+    </style>
+</head>
+
+<body>
+    <h3>Image Name Labeler</h3>
+
+    <div style="font-size:12px;color:#666;margin-bottom:12px">Select single or multiple images and press the button
+        below to extract file image names.</div>
+    <div>
+        <button id="addLabel" disabled>Add label to selection</button>
+        <div id="message"></div>
+    </div>
+
+    <script>
+        const addLabel = document.getElementById('addLabel');
+        const message = document.getElementById('message');
+
+        function setButtonState(active) {
+            if (active) {
+                addLabel.disabled = false;
+                addLabel.classList.add('active');
+            } else {
+                addLabel.disabled = true;
+                addLabel.classList.remove('active');
+            }
+        }
+        // Set initial button state to inactive (gray)
+        setButtonState(false);
+        function showMessage(text, type) {
+            message.textContent = text;
+            message.className = type || '';
+        }
+
+        addLabel.onclick = () => {
+            if (addLabel.disabled) return;
+            setButtonState(false);
+            showMessage('Creating label...', '');
+            parent.postMessage({ pluginMessage: { type: 'label-selection' } }, '*');
+        };
+
+        window.onmessage = (event) => {
+            const msg = event.data.pluginMessage;
+            if (!msg) return;
+            if (msg.type === 'labels-created') {
+                setButtonState(true);
+                if (msg.count > 0) {
+                    showMessage(`Added labels to ${msg.count} image(s)`, 'success');
+                } else {
+                    showMessage('No image fills found in selection', 'error');
+                }
+            }
+            if (msg.type === 'selection-info') {
+                // Enable button only if selection count > 0
+                setButtonState(msg.count > 0);
+            }
+        };
+
+        // Request selection info on load and when window regains focus
+        function requestSelectionInfo() {
+            parent.postMessage({ pluginMessage: { type: 'get-selection-info' } }, '*');
+        }
+        window.addEventListener('focus', requestSelectionInfo);
+        document.addEventListener('DOMContentLoaded', requestSelectionInfo);
+    </script>
+</body>
+
+</html>
