@@ -119,15 +119,22 @@ async function createLabelForImage(node) {
     labelContainer.x = nodeTransform[0][2];
     labelContainer.y = nodeTransform[1][2] - labelContainer.height - 8;
 
+    // Create group to keep image and label together
+    const labelGroup = figma.group([node, labelContainer], containerParent);
+    labelGroup.name = imageName + ' Group';
+
+    return labelGroup;
+
     // Ensure text resize is handled
     text.textAutoResize = "WIDTH_AND_HEIGHT";
 
-    // Create group with both the image and label
-    const group = figma.group([node, labelContainer], containerParent);
-    group.name = imageName + ' with label';
 
-    // Store reference to the label
+    // Store pluginData to track components
     group.setPluginData('labelId', text.id);
+    group.setPluginData('toggleId', toggleFrame.id);
+
+    // Set up click handler for the toggle
+    toggleFrame.setRelaunchData({ toggle: '' });
 
     return { group, text };
 }
