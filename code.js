@@ -1,6 +1,4 @@
-// Main plugin code for Image Name Labeler
-// Works in Figma and FigJam (editorType includes both)
-
+// Main plugin code
 figma.showUI(__html__, { width: 320, height: 200 });
 
 // Utility: try to derive image filename from image bytes (PNG tEXt/iTXt)
@@ -61,63 +59,74 @@ async function createLabelForImage(node) {
         imageName = await deriveImageNameFromNode(node);
     }
     // If no metadata found, fallback to node name
-    if (!imageName) imageName = node.name || 'Image';
+    if (!imageName) {
+        // Clean up the node name by removing any trailing numbers and spaces
+        imageName = (node.name || 'Image').replace(/\s*\d+\s*$/, '');
+    }
 
     // Create text label
     const text = figma.createText();
     text.fills = [{ type: 'SOLID', color: { r: 0, g: 0, b: 0 } }];
     text.name = 'Image Name Label';
 
-    // Load a common default font before writing characters or fontSize (Figma requirement).
-    // Roboto is commonly available; fall back to "Arial" style if Roboto isn't present.
+    // Load fonts before setting any text
     try {
-        await figma.loadFontAsync({ family: 'Roboto', style: 'Regular' });
-        text.fontName = { family: 'Roboto', style: 'Regular' };
+        await figma.loadFontAsync({ family: "Roboto", style: "Regular" });
+        text.fontName = { family: "Roboto", style: "Regular" };
     } catch (e) {
         try {
-            await figma.loadFontAsync({ family: 'Arial', style: 'Regular' });
-            text.fontName = { family: 'Arial', style: 'Regular' };
+            await figma.loadFontAsync({ family: "Inter", style: "Regular" });
+            text.fontName = { family: "Inter", style: "Regular" };
         } catch (e2) {
-            // If loading fails, don't set fontName; Figma will fall back to its default
+            await figma.loadFontAsync({ family: "Arial", style: "Regular" });
+            text.fontName = { family: "Arial", style: "Regular" };
         }
     }
 
     // Now it's safe to set font-dependent properties
-    text.fontSize = 16;
+    text.fontSize = 14;
     text.characters = imageName;
+    // Position outside the image at the top-left
+    const containerParent = node.parent || figma.currentPage;
 
-    // Set max width to image width for wrapping
-    if (typeof node.width === 'number') {
-        text.resize(node.width, text.height);
-        text.textAutoResize = "HEIGHT";
-    }
+    // Create container first
+    const labelContainer = figma.createFrame();
+    labelContainer.name = 'Image Name';
+    labelContainer.fills = [];
+    labelContainer.strokeWeight = 0;
+    labelContainer.layoutMode = 'HORIZONTAL';
+    labelContainer.counterAxisAlignItems = 'CENTER';
+    labelContainer.primaryAxisSizingMode = 'AUTO';
+    labelContainer.counterAxisSizingMode = 'AUTO';
+    labelContainer.itemSpacing = 4;
+    labelContainer.paddingLeft = 4;
+    labelContainer.paddingRight = 4;
+    labelContainer.paddingTop = 2;
+    labelContainer.paddingBottom = 2;
 
-    // Position outside the image at the top-left without covering it.
-    // Prefer placing the label to the left of the image with an 8px gap.
-    // If that would place the label off the left edge (x < 0), place it above the image instead.
-    const parent = node.parent || figma.currentPage;
-    parent.appendChild(text);
+    // Add text to container
+    text.x = 0;
+    text.y = 0;
+    labelContainer.appendChild(text);
 
-    // Use node.x/node.y which are in parent's coordinate space
-    const nodeX = typeof node.x === 'number' ? node.x : 0;
-    const nodeY = typeof node.y === 'number' ? node.y : 0;
+    // Add container to parent
+    containerParent.appendChild(labelContainer);
 
-    // Always place label above and outside the image, aligned to the left edge
-    // If the label is multi-line, grow upward so the bottom of the label stays above the image
-    // Wait for text layout to update (text.height is available after setting characters)
-    await figma.loadFontAsync(text.fontName); // ensure font is loaded for layout
-    // Optionally, force a relayout (not strictly needed in most cases)
-    const labelHeight = text.height;
-    const aboveX = nodeX;
-    const aboveY = nodeY - (labelHeight + 8);
-    text.x = aboveX;
-    text.y = aboveY;
+    // Get absolute transform positions
+    const nodeTransform = node.absoluteTransform;
 
-    // Group only the image and text so they move together
-    const group = figma.group([node, text], parent);
-    group.name = node.name + ' (with label)';
+    // Position at top-left corner, 8px above the image
+    labelContainer.x = nodeTransform[0][2];
+    labelContainer.y = nodeTransform[1][2] - labelContainer.height - 8;
 
-    // Store pluginData to track the label id
+    // Ensure text resize is handled
+    text.textAutoResize = "WIDTH_AND_HEIGHT";
+
+    // Create group with both the image and label
+    const group = figma.group([node, labelContainer], containerParent);
+    group.name = imageName + ' with label';
+
+    // Store reference to the label
     group.setPluginData('labelId', text.id);
 
     return { group, text };
@@ -177,7 +186,7 @@ figma.ui.onmessage = async (msg) => {
     }
 
     if (msg.type === 'toggle-visibility') {
-        // visibility feature removed - no-op
+        // Removed toggle visibility feature
     }
 
     if (msg.type === 'get-selection-info') {
@@ -211,4 +220,4 @@ figma.ui.onmessage = async (msg) => {
     }
 };
 
-// visibility feature removed - no selection listener
+
