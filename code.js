@@ -86,6 +86,8 @@ async function createLabelForImage(node) {
     // Now it's safe to set font-dependent properties
     text.fontSize = 14;
     text.characters = imageName;
+    // Ensure text auto-resizes so container height is correct
+    text.textAutoResize = "WIDTH_AND_HEIGHT";
     // Position outside the image at the top-left
     const containerParent = node.parent || figma.currentPage;
 
@@ -112,31 +114,16 @@ async function createLabelForImage(node) {
     // Add container to parent
     containerParent.appendChild(labelContainer);
 
-    // Get absolute transform positions
-    const nodeTransform = node.absoluteTransform;
-
-    // Position at top-left corner, 8px above the image
-    labelContainer.x = nodeTransform[0][2];
-    labelContainer.y = nodeTransform[1][2] - labelContainer.height - 8;
+    // Position at top-left corner (parent-relative), 8px above the image
+    // Use node.x/node.y which are relative to the same parent we appended the label to.
+    labelContainer.x = typeof node.x === 'number' ? node.x : 0;
+    labelContainer.y = (typeof node.y === 'number' ? node.y : 0) - labelContainer.height - 8;
 
     // Create group to keep image and label together
     const labelGroup = figma.group([node, labelContainer], containerParent);
     labelGroup.name = imageName + ' Group';
 
     return labelGroup;
-
-    // Ensure text resize is handled
-    text.textAutoResize = "WIDTH_AND_HEIGHT";
-
-
-    // Store pluginData to track components
-    group.setPluginData('labelId', text.id);
-    group.setPluginData('toggleId', toggleFrame.id);
-
-    // Set up click handler for the toggle
-    toggleFrame.setRelaunchData({ toggle: '' });
-
-    return { group, text };
 }
 
 // Helper: find all descendant nodes (including the node itself) that have image fills
