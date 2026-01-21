@@ -19,4 +19,8 @@ Usage
 
 Notes & Limitations
 - The plugin attempts to load the "Inter" font for the text. If not available, Figma will fallback to a default UI font.
+<<<<<<< HEAD
 - The plugin stores label metadata as pluginData on the group node.
+=======
+- The plugin stores label metadata as pluginData on the group node.
+>>>>>>> 1fd06ca3cce4a670a4fbe9aba8c6f2a5e7665559
